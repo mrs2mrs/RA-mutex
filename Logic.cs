@@ -17,7 +17,6 @@ namespace RicartAgrawala2
         int sequenceNumber = 0;
         int initialIntro = 0;
         DateTime endCriticalSection;
-        DateTime endInitialization;
         TimeSpan criticalSectionHandling = new TimeSpan(0, 0, 5);
         TimeSpan networkDelay = new TimeSpan(0, 0, 5);
         public Message.From itIsI;
@@ -120,6 +119,10 @@ namespace RicartAgrawala2
                 if (replayTimeout[i].peer == peer)
                 {
                     replayTimeout.RemoveAt(i);
+                    if (currentState == states.INITIALIZATION && initialIntro > 0)
+                    {
+                        initialIntro--;
+                    }
                 }
                 else
                 {
@@ -188,6 +191,11 @@ namespace RicartAgrawala2
                             peer.SendMessage(mms);
                             OnImportantMessageSent(peer, mms, Message.messageType.REQUEST);
                             break;
+                        case Message.messageType.HIGHEST_SEQ_NUM:
+                            Message sms = new Message(Message.messageType.ARE_YOU_THERE, itIsI);
+                            peer.SendMessage(sms);
+                            OnImportantMessageSent(peer, sms, Message.messageType.HIGHEST_SEQ_NUM);
+                            break;
                     }
                 }
             }
@@ -235,14 +243,6 @@ namespace RicartAgrawala2
                 return;
             }
             CheckTimeouts();
-            if (currentState == states.INITIALIZATION && initialIntro > 0)
-            {
-                if (DateTime.Now >= this.endInitialization)
-                {
-                    currentState = states.IDLE;
-                    Console.WriteLine("init done");
-                }
-            }
             setCanRequestCS();
         }
 
@@ -564,11 +564,8 @@ namespace RicartAgrawala2
                             Message rsp = new Message(Message.messageType.HIGHEST_SEQ_NUM, itIsI);
                             rsp.CONTENT.STATUS = Message.statusType.GET;
                             peer.SendMessage(rsp);
-                         //   OnImportantMessageSent(peer, rsp);
+                            OnImportantMessageSent(peer, rsp, Message.messageType.HIGHEST_SEQ_NUM);
                         }
-                        
-                        //@todo: according to protocol?
-                        endInitialization = DateTime.Now + new TimeSpan(0, 0, 10);
                     }
                     if (msg.CONTENT.STATUS == Message.statusType.NOT_UNIQUE)
                     {

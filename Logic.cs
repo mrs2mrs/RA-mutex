@@ -34,22 +34,26 @@ namespace RicartAgrawala2
         public void setCriticalSectTimespan(int sec)
         {
             criticalSectionHandling = new TimeSpan(0, 0, sec);
+            Log("critical section handling set to " + sec.ToString() + " seconds");
         }
 
         public void playDead()
         {
             savedState = currentState;
             currentState = states.NOT_CONNECTED;
+            Log("current state changed to NOT_CONNECTED");
         }
 
         public void respawn()
         {
             currentState = savedState;
+            Log("current state changed to " + currentState.ToString());
         }
 
         public void setNetworkDelay(int sec)
         {
             networkDelay = new TimeSpan(0, 0, sec);
+            Log("network delay set to " + sec.ToString() + " seconds");
         }
 
         void setCanRequestCS()
@@ -80,7 +84,7 @@ namespace RicartAgrawala2
             Message msg = new Message(Message.messageType.INIT, itIsI);
             msg.CONTENT.ROLE = Message.roleType.NEW;
             peers[tempSponsor].SendMessage(msg);
-            Log("requestSponsor");
+            Log("requestSponsor IP: " + _IP);
         }
 
         void OnImportantMessageSent(Peer peer, Message msg, Message.messageType typeToRemove)
@@ -109,6 +113,7 @@ namespace RicartAgrawala2
                 return;
             }
             peers[new_peer.name] = new_peer;
+            Log("new peer added, IP: " + new_peer.client.IPaddr);
         }
 
         void RemovePeer(Peer peer)
@@ -118,6 +123,7 @@ namespace RicartAgrawala2
             {
                 if (replayTimeout[i].peer == peer)
                 {
+                    Log("removing after timeout peer " + replayTimeout[i].peer.client.IPaddr);
                     replayTimeout.RemoveAt(i);
                     if (currentState == states.INITIALIZATION && initialIntro > 0)
                     {
@@ -139,7 +145,6 @@ namespace RicartAgrawala2
         public Logic(int _port, string _ip, string _name)
         {
             itIsI = new Message.From(_name, _port, _ip);
-            Log("Logic!!!");
         }
 
         bool isUniqueName(String _newName)
@@ -217,7 +222,6 @@ namespace RicartAgrawala2
                 release();
                 if (currentState == states.NOT_CONNECTED)
                 {
-                    Log("Tick: currentState == states.NOT_CONNECTED");
                     return;
                 }
                 foreach (Message msg in highestSNawaiting)
@@ -239,7 +243,6 @@ namespace RicartAgrawala2
             }
             if (currentState == states.NOT_CONNECTED)
             {
-                Log("Tick: currentState == states.NOT_CONNECTED");
                 return;
             }
             CheckTimeouts();
@@ -591,7 +594,7 @@ namespace RicartAgrawala2
             sequenceNumber++;
             Message msg = new Message(Message.messageType.REQUEST, itIsI);
             msg.CONTENT.SEQNUM = sequenceNumber;
-            Log("RequestForCS " + sequenceNumber);
+            Log("Request For CS sequence number: " + sequenceNumber);
             foreach (Peer peer in peers.Values)
             {
                 peer.SendMessage(msg);

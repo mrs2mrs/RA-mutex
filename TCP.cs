@@ -40,7 +40,6 @@ namespace RicartAgrawala2
         public MessageBuffer()
         {
             synchronizedList = ArrayList.Synchronized(new List<string>());
-            Console.WriteLine("Kazio mial racje");
         }
 
         public void PushForward(string v)

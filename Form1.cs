@@ -32,13 +32,11 @@ namespace RicartAgrawala2
 
         private void button1_Click(object sender, EventArgs e)
         {
-            int _port = 50000;
             try
             {
                 IPAddress ip = IPAddress.Parse(IPTextBox.Text);
-                _port = int.Parse(portTextBox.Text);
-                server = new Server(IPTextBox.Text, _port);
-                logic = new Logic(_port, IPTextBox.Text, uniqueNameTextBox.Text);
+                server = new Server(IPTextBox.Text, int.Parse(portTextBox.Text));
+                logic = new Logic(int.Parse(portTextBox.Text), IPTextBox.Text, uniqueNameTextBox.Text);
                 connectButton.Enabled = false;
                 printLog("connected ip: " + IPTextBox.Text);
             }
@@ -52,13 +50,11 @@ namespace RicartAgrawala2
         {
             if (null != logic)
             {
-                int _port = 50001;
                 try
                 {
                     IPAddress ip = IPAddress.Parse(IPTextBox.Text);
-                    _port = int.Parse(portTextBox.Text);
                     logic.currentState = Logic.states.INITIALIZATION;
-                    logic.requestSponsor(sponsorIPTextBox.Text, _port);
+                    logic.requestSponsor(sponsorIPTextBox.Text, int.Parse(sponsorPortTextBox.Text));
                 }
                 catch (FormatException)
                 {

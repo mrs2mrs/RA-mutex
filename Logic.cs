@@ -70,12 +70,12 @@ namespace RicartAgrawala2
 
         void ErrorLog(string str)
         {
-            Console.WriteLine(str);
+            Form1.printLog(str);
         }
 
         void Log(string str)
         {
-            Console.WriteLine(str);
+            Form1.printLog(str);
         }
 
         public void requestSponsor(string _IP, int _port)
@@ -251,6 +251,7 @@ namespace RicartAgrawala2
 
         public void dispose()
         {
+            Form1.printLog("dicsonnecting, goodbye");
             Message msg = new Message(Message.messageType.DEAD, itIsI);
             msg.CONTENT.STATUS = Message.statusType.REMOVE;
             msg.CONTENT.NODE = itIsI.UNIQUENAME;
@@ -391,6 +392,7 @@ namespace RicartAgrawala2
                 return;
             }
             replies.Add(msg.FROM.UNIQUENAME);
+            Form1.printLog("reply received from " + msg.FROM.UNIQUENAME);
             tryEnterCriticalSection();
             OnImportantMessageReply(peers[msg.FROM.UNIQUENAME], msg);
         }
@@ -594,7 +596,7 @@ namespace RicartAgrawala2
             sequenceNumber++;
             Message msg = new Message(Message.messageType.REQUEST, itIsI);
             msg.CONTENT.SEQNUM = sequenceNumber;
-            Log("Request For CS sequence number: " + sequenceNumber);
+            Log("Request For Critical Section. Incremented sequence number = " + sequenceNumber);
             foreach (Peer peer in peers.Values)
             {
                 peer.SendMessage(msg);
@@ -615,6 +617,7 @@ namespace RicartAgrawala2
                 return;
             }
             sequenceNumber++;
+            Form1.printLog("incrementing sequence number. equals = " + sequenceNumber.ToString());
             switch (currentState)
             {
                 case states.BUSY:

@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.messageTextBox = new System.Windows.Forms.TextBox();
+            messageTextBox = new System.Windows.Forms.TextBox();
             this.IPTextBox = new System.Windows.Forms.TextBox();
             this.portTextBox = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -69,14 +69,14 @@
             // 
             // messageTextBox
             // 
-            this.messageTextBox.Location = new System.Drawing.Point(16, 184);
-            this.messageTextBox.Margin = new System.Windows.Forms.Padding(2);
-            this.messageTextBox.Multiline = true;
-            this.messageTextBox.Name = "messageTextBox";
-            this.messageTextBox.ReadOnly = true;
-            this.messageTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.messageTextBox.Size = new System.Drawing.Size(332, 321);
-            this.messageTextBox.TabIndex = 0;
+            messageTextBox.Location = new System.Drawing.Point(16, 184);
+            messageTextBox.Margin = new System.Windows.Forms.Padding(2);
+            messageTextBox.Multiline = true;
+            messageTextBox.Name = "messageTextBox";
+            messageTextBox.ReadOnly = true;
+            messageTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            messageTextBox.Size = new System.Drawing.Size(332, 321);
+            messageTextBox.TabIndex = 0;
             // 
             // IPTextBox
             // 
@@ -282,7 +282,7 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.disconnectButton);
             this.splitContainer1.Panel2.Controls.Add(this.label8);
-            this.splitContainer1.Panel2.Controls.Add(this.messageTextBox);
+            this.splitContainer1.Panel2.Controls.Add(messageTextBox);
             this.splitContainer1.Panel2.Controls.Add(this.deadButton);
             this.splitContainer1.Panel2.Controls.Add(this.csReqButton);
             this.splitContainer1.Size = new System.Drawing.Size(763, 507);
@@ -436,7 +436,7 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox messageTextBox;
+        private static System.Windows.Forms.TextBox messageTextBox;
         private System.Windows.Forms.TextBox IPTextBox;
         private System.Windows.Forms.TextBox portTextBox;
         private System.Windows.Forms.Label label1;

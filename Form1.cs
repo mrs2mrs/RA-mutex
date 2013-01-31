@@ -27,7 +27,7 @@ namespace RicartAgrawala2
 
         public void printIPlist(String IPlist)
         {
-            this.messageTextBox.Text = IPlist;
+            messageTextBox.Text = IPlist;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -124,10 +124,10 @@ namespace RicartAgrawala2
             }
         }
 
-        public void printLog(string str)
+        public static void printLog(string str)
         {
-            this.messageTextBox.Text += str;
-            this.messageTextBox.Text += System.Environment.NewLine;
+            messageTextBox.Text += str;
+            messageTextBox.Text += System.Environment.NewLine;
 
         }
 

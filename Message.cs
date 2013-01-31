@@ -22,7 +22,7 @@ namespace RicartAgrawala2
         public void SendMessage(Message msg)
         {
             client.SendMessage(msg.toJson());
-            Console.WriteLine("sent from " + msg.FROM.UNIQUENAME + " type " + msg.TYPE);
+            Form1.printLog("sent to " + msg.FROM.UNIQUENAME + " type " + msg.TYPE);
             
         }
     }

@@ -82,6 +82,7 @@ namespace RicartAgrawala2
         {
             AddPeer(new Peer(_IP, _port, tempSponsor));
             Message msg = new Message(Message.messageType.INIT, itIsI);
+            msg.CONTENT = new Message.Content();
             msg.CONTENT.ROLE = Message.roleType.NEW;
             peers[tempSponsor].SendMessage(msg);
             Log("requestSponsor IP: " + _IP);
@@ -101,8 +102,7 @@ namespace RicartAgrawala2
 
         void AddPeer(string _uniqueName, string _ip, int _port)
         {
-            Peer new_peer = new Peer(_ip, _port, _uniqueName);
-            AddPeer(new_peer);
+            AddPeer(new Peer(_ip, _port, _uniqueName));
         }
 
         void AddPeer(Peer new_peer)
@@ -113,6 +113,7 @@ namespace RicartAgrawala2
                 return;
             }
             peers[new_peer.name] = new_peer;
+            LogPeerList();
             Log("new peer added, IP: " + new_peer.client.IPaddr);
         }
 
@@ -136,10 +137,25 @@ namespace RicartAgrawala2
                 }
             }
             replies.Remove(peer.name);
+            LogPeerList();
             if (currentState == states.REQUESTING)
             {
                 tryEnterCriticalSection();
             }
+        }
+
+        void LogPeerList()
+        {
+            string ret = "unique name, IP, port";
+            ret += System.Environment.NewLine;
+            foreach (Peer peer in peers.Values)
+            {
+                ret += peer.name + " " + peer.client.IPaddr + " " + peer.client.port;
+                ret += System.Environment.NewLine;
+            }
+            Form1.printNodeList(ret);
+            
+            
         }
 
         public Logic(int _port, string _ip, string _name)
@@ -183,6 +199,7 @@ namespace RicartAgrawala2
                     {
                         case Message.messageType.ARE_YOU_THERE:
                             Message mss = new Message(Message.messageType.DEAD, itIsI);
+                            mss.CONTENT = new Message.Content();
                             mss.CONTENT.NODE = peer.name;
                             dead.Add(peer);
                             foreach (Peer p in peers.Values)
@@ -251,8 +268,17 @@ namespace RicartAgrawala2
 
         public void dispose()
         {
+            foreach (Peer peer in peers.Values)
+            {
+                peer.dispose();
+            }
+        }
+
+        public void sendDead()
+        {
             Form1.printLog("dicsonnecting, goodbye");
             Message msg = new Message(Message.messageType.DEAD, itIsI);
+            msg.CONTENT = new Message.Content();
             msg.CONTENT.STATUS = Message.statusType.REMOVE;
             msg.CONTENT.NODE = itIsI.UNIQUENAME;
             foreach (Peer peer in peers.Values)
@@ -290,6 +316,7 @@ namespace RicartAgrawala2
             if (msg.TYPE != Message.messageType.INIT && !peers.Keys.Contains(msg.FROM.UNIQUENAME))
             {
                 Message rsp = new Message(Message.messageType.DEAD, itIsI);
+                rsp.CONTENT = new Message.Content();
                 rsp.CONTENT.STATUS = Message.statusType.RE_INIT;
                 Peer temp = new Peer(msg.FROM.IP, msg.FROM.PORT, msg.FROM.UNIQUENAME);
                 temp.SendMessage(rsp);
@@ -361,6 +388,11 @@ namespace RicartAgrawala2
 
         void HandleDead(Message msg)
         {
+            if (null == msg.CONTENT)
+            {
+                Form1.printLog("protocol error - DEAD: missing content");
+                return;
+            }
             switch(msg.CONTENT.STATUS)
             {
                 case Message.statusType.REMOVE:
@@ -368,6 +400,8 @@ namespace RicartAgrawala2
                     break;
                 case Message.statusType.RE_INIT:
                     ErrorLog("RE INIT");
+                    currentState = states.NOT_CONNECTED;
+                    Log("after RE-INIT currentState = NOT_CONNECTED");
                     break;
             }
         }
@@ -422,6 +456,7 @@ namespace RicartAgrawala2
             if (!isUniqueName(newPeer.name))
             {
                 Message new_msg = new Message(Message.messageType.INIT, itIsI);
+                new_msg.CONTENT = new Message.Content();
                 new_msg.CONTENT.ROLE = Message.roleType.SPONSOR;
                 new_msg.CONTENT.STATUS = Message.statusType.NOT_UNIQUE;
                 newPeer.SendMessage(new_msg);
@@ -431,12 +466,9 @@ namespace RicartAgrawala2
             {
                 {
                     Message msg = new Message(Message.messageType.INIT, itIsI);
-
+                    msg.CONTENT = new Message.Content();
                     msg.CONTENT.ROLE = Message.roleType.NODE;
-
-                    msg.CONTENT.NEWDATA.UNIQUENAME = newPeer.name;
-                    msg.CONTENT.NEWDATA.IP = newPeer.client.IPaddr;
-                    msg.CONTENT.NEWDATA.PORT = newPeer.client.port;
+                    msg.CONTENT.NEWDATA = new Message.From(newPeer.name, newPeer.client.port, newPeer.client.IPaddr);
                     foreach (Peer peer in peers.Values)
                     {
                         peer.SendMessage(msg);
@@ -445,11 +477,12 @@ namespace RicartAgrawala2
 
                 {
                     Message msg = new Message(Message.messageType.INIT, itIsI);
+                    msg.CONTENT = new Message.Content();
                     msg.CONTENT.ROLE = Message.roleType.SPONSOR;
                     msg.CONTENT.STATUS = Message.statusType.OK;
-                    if (peers.Values.Count > 1)
+                    if (peers.Values.Count > 0) //// CHECK !!!
                     {
-                        msg.CONTENT.NODESDATA = new Message.From[peers.Values.Count - 1];
+                        msg.CONTENT.NODESDATA = new Message.From[peers.Values.Count];
                         int i = 0;
                         foreach (Peer peer in peers.Values)
                         {
@@ -513,6 +546,7 @@ namespace RicartAgrawala2
         void SendHighestSeqNr(Message msg)
         {
             Message rsp = new Message(Message.messageType.HIGHEST_SEQ_NUM, itIsI);
+            rsp.CONTENT = new Message.Content();
             rsp.CONTENT.STATUS = Message.statusType.RESPONSE;
             rsp.CONTENT.VALUE = this.sequenceNumber;
 
@@ -552,6 +586,7 @@ namespace RicartAgrawala2
                     }
                     if (msg.CONTENT.STATUS == Message.statusType.OK)
                     {
+                        Log("OK MESSAGE TEXT ! " + msg.toJson());
                         initialIntro = 0;
                         if (null != msg.CONTENT.NODESDATA)
                         {
@@ -559,6 +594,7 @@ namespace RicartAgrawala2
                             {
                                 Peer new_peer = new Peer(peer.IP, peer.PORT, peer.UNIQUENAME);
                                 AddPeer(new_peer);
+                                Form1.printLog("importing peers info " + new_peer.name);
                             }
                         }
                         RemovePeer(peers[tempSponsor]);
@@ -567,6 +603,7 @@ namespace RicartAgrawala2
                         {
                             this.initialIntro++;
                             Message rsp = new Message(Message.messageType.HIGHEST_SEQ_NUM, itIsI);
+                            rsp.CONTENT = new Message.Content();
                             rsp.CONTENT.STATUS = Message.statusType.GET;
                             peer.SendMessage(rsp);
                             OnImportantMessageSent(peer, rsp, Message.messageType.HIGHEST_SEQ_NUM);
@@ -595,6 +632,7 @@ namespace RicartAgrawala2
             currentState = states.REQUESTING;
             sequenceNumber++;
             Message msg = new Message(Message.messageType.REQUEST, itIsI);
+            msg.CONTENT = new Message.Content();
             msg.CONTENT.SEQNUM = sequenceNumber;
             Log("Request For Critical Section. Incremented sequence number = " + sequenceNumber);
             foreach (Peer peer in peers.Values)

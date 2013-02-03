@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel;
 
 
 namespace RicartAgrawala2
@@ -22,18 +23,21 @@ namespace RicartAgrawala2
         public void SendMessage(Message msg)
         {
             client.SendMessage(msg.toJson());
-            Form1.printLog("sent to " + msg.FROM.UNIQUENAME + " type " + msg.TYPE);
-            
+            Form1.printLog("sent to " + name + " type " + msg.TYPE);
+        }
+        public void dispose()
+        {
+            client.dispose();
         }
     }
 
     public class Message
     {
-        public enum messageType { INIT, REPLY, REQUEST, ARE_YOU_THERE, YES_I_AM_HERE, DEAD, HIGHEST_SEQ_NUM }
-        public enum roleType { NEW, SPONSOR, NODE}
-        public enum statusType { NOT_UNIQUE, OK, REMOVE, GET, RESPONSE, RE_INIT }
-        
-        public struct From
+        public enum messageType { NA, INIT, REPLY, REQUEST, ARE_YOU_THERE, YES_I_AM_HERE, DEAD, HIGHEST_SEQ_NUM }
+        public enum roleType { NA, NEW, SPONSOR, NODE }
+        public enum statusType { NA, NOT_UNIQUE, OK, REMOVE, GET, RESPONSE, RE_INIT }
+
+        public class From
         {
             public string UNIQUENAME;
             public string IP;
@@ -47,45 +51,65 @@ namespace RicartAgrawala2
             }
         }
 
-        public struct Content
+        public class Content
         {
             [JsonConverter(typeof(StringEnumConverter))]
-            public roleType ROLE;
+            [DefaultValue(roleType.NA)]
+            public roleType ROLE = roleType.NA;
+
             [JsonConverter(typeof(StringEnumConverter))]
-            public statusType STATUS;
-            public int VALUE;
-            public string NODE;
+            [DefaultValue(statusType.NA)]
+            public statusType STATUS = statusType.NA;
 
-            public int SEQNUM;
+            [DefaultValue(-1)]
+            public int VALUE = -1;
 
-            public From NEWDATA;
-            public From[] NODESDATA;
+            public string NODE = null;
+
+            [DefaultValue(-1)]
+            public int SEQNUM = -1;
+
+            public From NEWDATA = null;
+            public From[] NODESDATA = null;
         }
 
         [JsonConverter(typeof(StringEnumConverter))]
         public messageType TYPE;
         public From FROM;
-        public Content CONTENT;
+        public Content CONTENT = null;
 
         public Message(messageType _msgType, From _from )
         {
             TYPE = _msgType;
             FROM = _from;
-            CONTENT = new Content();
         }
 
         public Message() { }
 
         public string toJson ()
         {
-            string msg_str = JsonConvert.SerializeObject(this);
-            //Console.WriteLine(msg_str);
+            if (TYPE != messageType.YES_I_AM_HERE && CONTENT == null)
+            {
+                Form1.printLog("toJson() error - CONTENT is null");
+            }
+
+            string msg_str = JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            });
+            Console.WriteLine(msg_str);
             return msg_str;
         }
 
         static public Message fromJson(string str)
         {
-            return JsonConvert.DeserializeObject<Message>(str);
+            Message msg = JsonConvert.DeserializeObject<Message>(str);
+            if (msg.TYPE != messageType.YES_I_AM_HERE && msg.CONTENT == null)
+            {
+                Form1.printLog("fromJson() error - CONTENT is null");
+            }
+            return msg;
         }
     }
 }

@@ -13,9 +13,8 @@ namespace RicartAgrawala2
     {
         public static String SearchIPs()
         {
-            String ret;
+            String ret = "";
             IPAddress[] ipAddrList = Dns.GetHostAddresses(Dns.GetHostName());
-            ret = "List of host's IPs" + System.Environment.NewLine;
             foreach (IPAddress ip in ipAddrList)
             {
                 ret += ip.ToString() + System.Environment.NewLine;
@@ -64,13 +63,14 @@ namespace RicartAgrawala2
             return null;
         }
     }
-
-    class Server
+/*
+    class ServerOLD
     {
         private TcpListener tcpListener;
         private Thread listenThread;
+        private bool killMe = false;
 
-        public Server(String stringIP, int port)
+        public ServerOLD(String stringIP, int port)
         {
             try
             {
@@ -91,11 +91,11 @@ namespace RicartAgrawala2
             {
                 this.tcpListener.Start();
 
-                while (true)
+                while (!killMe)
                 {
                     //blocks until a client has connected to the server
                     TcpClient client = this.tcpListener.AcceptTcpClient();
-
+                    //tcpListener.BeginAcceptTcpClient
                     //create a thread to handle communication 
                     //with connected client
                     Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
@@ -113,24 +113,47 @@ namespace RicartAgrawala2
             }
         }
 
+        private void newListenThread()
+        {
+
+        }
+
         public void Dispose()
         {
             if (listenThread != null)
             {
-                listenThread.Abort();
+                killMe = true;
+                listenThread.Join();
                 listenThread = null;
-            }
-            if (null != tcpListener)
-            {
-                tcpListener.Stop();
                 tcpListener = null;
+                killMe = false;
             }
         }
 
 
 
+    }
+    */
+    class Server
+    {
+        private TcpListener tcpListener;
 
-        private void HandleClientComm(object client)
+        public Server(String stringIP, int port)
+        {
+            try
+            {
+                tcpListener = new TcpListener(IPAddress.Parse(stringIP), port);
+                tcpListener.Start();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("tcpListener Start error: ", e);
+                return;
+            }
+            BeginListen();
+        }
+
+        static void HandleClientComm(object client)
         {
             TcpClient tcpClient = (TcpClient)client;
             NetworkStream clientStream = tcpClient.GetStream();
@@ -170,6 +193,50 @@ namespace RicartAgrawala2
             tcpClient.Close();
         }
 
+        static void DoAcceptTcpClientCallback(IAsyncResult ar)
+        {
+            try
+            {
+                Server server = (Server)ar.AsyncState;
+                TcpListener listener = server.tcpListener;
+                TcpClient client = listener.EndAcceptTcpClient(ar);
+
+                Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
+                clientThread.Start(client);
+
+                Console.WriteLine("Client connected completed");
+
+                server.BeginListen();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("DoAcceptTcpClientCallback error: ", e);
+            }
+        }
+
+        void BeginListen()
+        {
+            // Start to listen for connections from a client.
+            Console.WriteLine("Waiting for a connection...");
+
+            try
+            {
+                // Accept the connection.  
+                // BeginAcceptSocket() creates the accepted socket.
+                tcpListener.BeginAcceptTcpClient(
+                    new AsyncCallback(DoAcceptTcpClientCallback),
+                    this);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("tcpListener BeginAcceptTcpClient error: ", e);
+            }
+        }
+
+        public void Dispose()
+        {
+            tcpListener.Stop();
+        }
     }
 
     class Client
@@ -195,6 +262,11 @@ namespace RicartAgrawala2
                 Console.WriteLine("SocketException: ", e);
             }
 
+        }
+
+        public void dispose()
+        {
+            this.client.Close();
         }
 
         public void SendMessage(String msg)

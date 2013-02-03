@@ -10,10 +10,12 @@ namespace RicartAgrawala2
         [STAThread]
         static void Main()
         {
+            Message msg = new Message(Message.messageType.YES_I_AM_HERE, new Message.From("Kazio", 7, "127.0.0.1"));
+            msg.toJson();
 
-            string str = "{\"TYPE\":\"DEAD\",\"FROM\":{\"UniqueName\":\"Marynioszek\",},\"CONTENT\":{\"Role\":\"Sponsor\",\"SiepNr\":0,\"SeqNum\":3,\"NewData\":{\"Ip\":null,\"Port\":0}}}";
-            Message test = Message.fromJson(str);
-            test.toJson();
+            //string str = "{\"TYPE\":\"DEAD\",\"FROM\":{\"UniqueName\":\"Marynioszek\",},\"CONTENT\":{\"Role\":\"Sponsor\",\"SiepNr\":0,\"SeqNum\":3,\"NewData\":{\"Ip\":null,\"Port\":0}}}";
+            //Message test = Message.fromJson(str);
+            //test.toJson();
 
             /*
             Message test = new Message(Message.messageType.DEAD, new Message.From("Marynioszek", 666, "6.6.6.6.6"));

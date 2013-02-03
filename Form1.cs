@@ -18,16 +18,20 @@ namespace RicartAgrawala2
         bool isKill = false;
         string iplist;
 
+        static Form1 instance = null;
+
         public Form1(String listOfIP)
         {
             InitializeComponent();
             iplist = listOfIP;
             printIPlist(iplist);
+
+            instance = this;
         }
 
         public void printIPlist(String IPlist)
         {
-            messageTextBox.Text = IPlist;
+            availableIPTextBox.Text = IPlist;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -126,9 +130,12 @@ namespace RicartAgrawala2
 
         public static void printLog(string str)
         {
-            messageTextBox.Text += str;
-            messageTextBox.Text += System.Environment.NewLine;
+            Console.WriteLine(str);
+        }
 
+        public static void printNodeList(string str)
+        {
+            instance.nodeListextBox.Text = str;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -151,12 +158,14 @@ namespace RicartAgrawala2
         {
             if (null != server && null != logic)
             {
+                logic.sendDead();
                 logic.dispose();
                 logic = null;
                 server.Dispose();
                 server = null;
                 printIPlist(iplist);
                 connectButton.Enabled = true;
+                nodeListextBox.Text = "";
             }
         }
 
@@ -189,6 +198,12 @@ namespace RicartAgrawala2
             if (logic != null)
                 logic.currentState = Logic.states.IDLE;
         }
+
+        
+
+        
+
+        
 
        
 

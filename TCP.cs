@@ -156,86 +156,99 @@ namespace RicartAgrawala2
         static void HandleClientComm(object client)
         {
             TcpClient tcpClient = (TcpClient)client;
-            NetworkStream clientStream = tcpClient.GetStream();
-
-            byte[] message = new byte[4096];
-            int bytesRead;
-
-            while (true)
+            if (null != tcpClient && tcpClient.Connected)
             {
-                bytesRead = 0;
+                NetworkStream clientStream = tcpClient.GetStream();
 
-                try
-                {
-                    //blocks until a client sends a message
-                    bytesRead = clientStream.Read(message, 0, 4096);
-                }
-                catch
-                {
-                    //a socket error has occured
-                    break;
-                }
+                byte[] message = new byte[4096];
+                int bytesRead;
 
-                if (bytesRead == 0)
+                while (true)
                 {
-                    //the client has disconnected from the server
-                    break;
-                }
+                    bytesRead = 0;
 
-                //message has successfully been received
-                ASCIIEncoding encoder = new ASCIIEncoding();
-                System.Diagnostics.Debug.WriteLine(encoder.GetString(message, 0, bytesRead));
-                String s = encoder.GetString(message, 0, bytesRead);
-                //Console.WriteLine("push to msg buff");
-                MessageBuffer.get().PushForward(s);
+                    try
+                    {
+                        //blocks until a client sends a message
+                        bytesRead = clientStream.Read(message, 0, 4096);
+                    }
+                    catch
+                    {
+                        //a socket error has occured
+                        break;
+                    }
+
+                    if (bytesRead == 0)
+                    {
+                        //the client has disconnected from the server
+                        break;
+                    }
+
+                    //message has successfully been received
+                    ASCIIEncoding encoder = new ASCIIEncoding();
+                    System.Diagnostics.Debug.WriteLine(encoder.GetString(message, 0, bytesRead));
+                    String s = encoder.GetString(message, 0, bytesRead);
+                    //Console.WriteLine("push to msg buff");
+                    MessageBuffer.get().PushForward(s);
+                }
+                tcpClient.Close();
             }
-
-            tcpClient.Close();
         }
 
         static void DoAcceptTcpClientCallback(IAsyncResult ar)
         {
+            Server server = (Server)ar.AsyncState;
             try
             {
-                Server server = (Server)ar.AsyncState;
+                
                 TcpListener listener = server.tcpListener;
-                TcpClient client = listener.EndAcceptTcpClient(ar);
-
-                Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
-                clientThread.Start(client);
-
-                Console.WriteLine("Client connected completed");
-
-                server.BeginListen();
+                if (null != listener)
+                {
+                    TcpClient client = listener.EndAcceptTcpClient(ar);
+                    if (null != client && client.Connected)
+                    {
+                        Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
+                        clientThread.Start(client);
+                        Console.WriteLine("Client connected completed");
+                    }
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine("DoAcceptTcpClientCallback error: ", e);
+                Console.WriteLine("DoAcceptTcpClientCallback error: " + e.ToString());
             }
+
+            server.BeginListen();
         }
 
         void BeginListen()
         {
             // Start to listen for connections from a client.
             Console.WriteLine("Waiting for a connection...");
-
             try
             {
                 // Accept the connection.  
                 // BeginAcceptSocket() creates the accepted socket.
-                tcpListener.BeginAcceptTcpClient(
-                    new AsyncCallback(DoAcceptTcpClientCallback),
-                    this);
+                if (null != tcpListener)
+                {
+                    tcpListener.BeginAcceptTcpClient(
+                        new AsyncCallback(DoAcceptTcpClientCallback),
+                        this);
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine("tcpListener BeginAcceptTcpClient error: ", e);
+                Console.WriteLine("tcpListener BeginAcceptTcpClient error: " + e.ToString());
             }
         }
 
         public void Dispose()
         {
-            tcpListener.Stop();
+            if (null != tcpListener)
+            {
+                tcpListener.Stop();
+            }
+            tcpListener = null;
         }
     }
 
@@ -271,13 +284,18 @@ namespace RicartAgrawala2
 
         public void SendMessage(String msg)
         {
-            NetworkStream clientStream = client.GetStream();
+            if (client.Connected)
+            {
+                NetworkStream clientStream = client.GetStream();
 
-            ASCIIEncoding encoder = new ASCIIEncoding();
-            byte[] buffer = encoder.GetBytes(msg);
+                ASCIIEncoding encoder = new ASCIIEncoding();
+                byte[] buffer = encoder.GetBytes(msg);
 
-            clientStream.Write(buffer, 0, buffer.Length);
-            clientStream.Flush();
+                clientStream.Write(buffer, 0, buffer.Length);
+                clientStream.Flush();
+            }
+            else
+                Form1.printLog("SendMessage error: client not connected");
         }
 
 

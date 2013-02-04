@@ -125,6 +125,7 @@ namespace RicartAgrawala2
                 if (replayTimeout[i].peer == peer)
                 {
                     Log("removing after timeout peer " + replayTimeout[i].peer.client.IPaddr);
+                    peer.dispose();
                     replayTimeout.RemoveAt(i);
                     if (currentState == states.INITIALIZATION && initialIntro > 0)
                     {
